@@ -1,3 +1,13 @@
+/* ///////////////////////////////////////////
+*  ROBOCAM_CONTROL
+*  Feb 02-13-2013
+*  Cameron Browning
+*  Use WASD to Focus / Zoom
+*  Use Arrow Keys to Pan / Tilt
+*  A VC-C4 Camera
+*
+*/ ///////////////////////////////////////////
+
 import processing.serial.*;
 
 Serial myPort;  // Create object from Serial class
