@@ -1,12 +1,12 @@
 /* ///////////////////////////////////////////
-*  ROBOCAM_CONTROL
-*  Feb 02-13-2013
-*  Cameron Browning
-*  Use WASD to Focus / Zoom
-*  Use Arrow Keys to Pan / Tilt
-*  A VC-C4 Camera
-*
-*/ ///////////////////////////////////////////
+ *  ROBOCAM_CONTROL
+ *  Feb 02-13-2013
+ *  Cameron Browning
+ *  Use WASD to Focus / Zoom
+ *  Use Arrow Keys to Pan / Tilt
+ *  A VC-C4 Camera
+ *
+ *////////////////////////////////////////////
 
 import processing.serial.*;
 
@@ -19,6 +19,8 @@ int[] command;
 int[] footer;
 
 boolean isReady;
+
+boolean newLine;
 
 
 String header_str = "FF 30 30 00";
@@ -46,11 +48,47 @@ String lastHexString = "";
 void setup() 
 {
 
-
+  newLine = true;
 
   size(200, 200);
-  println(Serial.list());
-  String portName = Serial.list()[0];
+  //println(Serial.list());
+  String portName;
+  int portNumber = -1;
+
+  // if you're lucky:
+  // portName = Serial.list()[0];
+
+  // otherwise:
+  portName = "/dev/tty.usbserial";
+
+  String [] serialPorts = Serial.list();
+
+
+
+  for (int i=0;i<serialPorts.length;i++) {
+    print(serialPorts[i]);
+    if (serialPorts[i].equals(portName)) {
+      println("*"); 
+      portNumber = i;
+    } 
+    else { 
+      println();
+    }
+  }
+  
+
+  
+  if(portNumber == -1){
+   println(portName + " not found, defaulting to: " + serialPorts[0]+".");
+  portNumber = 0; 
+  } else {
+   println(portName + " found. "); 
+  }
+
+
+  portName = Serial.list()[portNumber];
+
+
   myPort = new Serial(this, portName, 9600);
   isReady = true;
 
@@ -70,20 +108,24 @@ void setup()
 
 void draw() {
 
-  if ( myPort.available() > 0) {  // If data is available,
 
+  if ( myPort.available() > 0) {  // If data is available,
+    if (newLine) print("received:\t");
+    newLine = false;
     int inByte = myPort.read();
     print (hex(inByte, 2));
     if (hex(inByte, 2).equals("EF")) {
       println(".");
+      newLine = true;
     }
   } 
   else {
-
   }
 }
 
-
+void stop() {
+  myPort.stop();
+}
 
 
 int [] buildSerialString(String commandString) {
@@ -99,7 +141,7 @@ int [] buildSerialString(String commandString) {
     returnArray = new int[list.length];
     for (int i=0;i<list.length;i++) {
 
-      returnArray[i] = int(unhex(list[i])); 
+      returnArray[i] = int(unhex(list[i]));
     }
 
 
@@ -170,3 +212,4 @@ void keyReleased() {
     }
   }
 }
+

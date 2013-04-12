@@ -15,3 +15,9 @@ Looking through the VC-C4 Programmer's Manual is a good start. I'm maintaining a
 
 
 <img src="screenshot.jpg" />
+
+# Requirements
+
+When using some USB-Serial adapters on Mac, you might need the Prolific USB - Serial Driver. We use this one:
+
+- http://www.prolific.com.tw/US/ShowProduct.aspx?p_id=229&pcid=41
