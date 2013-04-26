@@ -1,19 +1,24 @@
+/*
+// ROBOCAM CONTROL
+// Authored by Cameron Browning at the American Museum of Natural History
+// 04-26-2013
+*/
 
 
+// define input pins
 #define TILT_DOWN 4
 #define TILT_UP 5
 #define PAN_RIGHT 6
 #define PAN_LEFT 7
-
 #define ZOOM_DOWN 8 
 #define ZOOM_UP 9
-
 #define FOCUS_RIGHT 10
 #define FOCUS_LEFT 11
 
-#define LED 13
-
 #define NUM_INPUTS 8
+
+// led pin
+#define LED 13
 
 
 // if something goes wrong, set this to true and plug the arduino into a serial monitor
@@ -25,10 +30,9 @@
 // when the power is cycled on the Robocam Control hardware.
 #define DAILY_RESET false
 
+// list of input pins
 int inputPins [] = {
   TILT_DOWN, TILT_UP, PAN_RIGHT, PAN_LEFT, ZOOM_DOWN, ZOOM_UP, FOCUS_LEFT, FOCUS_RIGHT};
-
-int messageLength;
 
 // CAMERA MESSAGES
 
@@ -86,67 +90,55 @@ byte focusFar_bytes [] = {
 byte focusStop_bytes [] = {
   0xFF , 0x30 , 0x31 , 0x00 , 0xA1 , 0x31 , 0xEF};
 
+// joystick axis states
 // with these, 0 means nothing, 1 means left or down, 2 means right or up
 byte focusState = 0;
 byte zoomState = 0;
 byte panState = 0;
 byte tiltState = 0;
-
+// joystick axis comparisons
 byte prevFocus = 0;
 byte prevZoom = 0;
 byte prevPan = 0;
 byte prevTilt = 0;
 
 
-byte incomingByte;
-
-
-// the setup routine runs once when you press reset:
 void setup() {
-  // initialize serial communication at 9600 bits per second:
 
-  messageLength = sizeof(hostControl_bytes);
-
+  // set the pin modes
   for(int i=0;i< NUM_INPUTS; i++){
     pinMode(inputPins[i],INPUT_PULLUP);
   }
   pinMode(LED,OUTPUT);
-  digitalWrite(LED,HIGH);
 
+  // set up the serial
   Serial.begin(9600);
 
-
+  // wait for it, just to be safe
   waitForSerial();
 
-
-
-
+  // send the camera it's startup messages
   initializeCamera();
+  // LED off
   digitalWrite(LED,LOW);
-  // make the pushbutton's pin an input:
-  //pinMode(pushButton, INPUT_PULLUP);
+
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-  // waitForSerial();
-  // read the input pin:
-  //int buttonState = digitalRead(pushButton);
-  // print out the state of the button:
-  // Serial.println(buttonState);
-  //if(digitalRead(PAN_LEFT)==LOW){
-  // Serial.println("pan left"); 
-  //}
+  waitForSerial();  // safety
 
+  // check the sticks
   monitorLeftStick();
   monitorRightStick();
 
+   // light up the LED if anythings on. 
   if(isAnyStickInUse()){
-    // TO DO: light up the led 
+    digitalWrite(LED,HIGH);
+  } else {
+     digitalWrite(LED,LOW);
   }
   delay(10);        // delay in between reads for stability
-
-  // TO DO: turn off the led
 
 }
 
@@ -162,19 +154,21 @@ boolean isAnyStickInUse(){
 
 
 
-void printStatus(String action, byte dir, boolean xaxis){
-  String msg = action;
-  String oneMsg, twoMsg;
-  if(xaxis){
-    oneMsg = " left";
-    twoMsg = " right"; 
+void debugStatus(String action, byte dir, boolean xaxis){
+  if(DEBUG_MODE){ 
+    String msg = action;
+    String oneMsg, twoMsg;
+    if(xaxis){
+      oneMsg = " left";
+      twoMsg = " right"; 
+    } 
+    else {
+      oneMsg = " down";
+      twoMsg = " up";
+    }
+    dir == 0 ? msg += " stop" : dir == 1 ? msg += oneMsg : msg += twoMsg;
+    Serial.println(msg); 
   } 
-  else {
-    oneMsg = " down";
-    twoMsg = " up";
-  }
-  dir == 0 ? msg += " stop" : dir == 1 ? msg += oneMsg : msg += twoMsg;
-  if(DEBUG_MODE) Serial.println(msg);  
 }
 
 void doZoom(byte dir){
@@ -182,10 +176,8 @@ void doZoom(byte dir){
   // 0: error
   // 1: down
   // 2: up
-
-  //TO DO: IMPLEMENT
-  printStatus("zoom",dir, false);
-    switch(zoomState){
+  debugStatus("zoom",dir, false);
+  switch(zoomState){
   case 0:
     Serial.write(zoomStop_bytes,sizeof(zoomStop_bytes));
     break;
@@ -202,8 +194,8 @@ void doFocus(byte dir){
   // 0: error
   // 1: left
   // 2:right
-  //TO DO: IMPLEMENT
-  printStatus("focus",dir,true);
+  debugStatus("focus",dir,true);
+
   switch(focusState){
   case 0:
     Serial.write(focusStop_bytes,sizeof(focusStop_bytes));
@@ -222,8 +214,7 @@ void doPan(byte dir){
   // 0: error
   // 1: left
   // 2:right
-  //TO DO: IMPLEMENT
-  printStatus("pan",dir,true);
+  debugStatus("pan",dir,true);
 
   switch(panState){
   case 0:
@@ -244,7 +235,7 @@ void doTilt(byte dir){
   // 1: down
   // 2: up
   //TO DO: IMPLEMENT
-  printStatus("tilt",dir,false);
+  debugStatus("tilt",dir,false);
   switch(tiltState){
   case 0:
     Serial.write(panTiltStop_bytes,sizeof(panTiltStop_bytes));
@@ -260,9 +251,6 @@ void doTilt(byte dir){
 
 void monitorLeftStick(){
   // Zoom and Focus
-
-  //  byte prevZoom = zoomState;
-  //  byte prevFocus = focusState;
 
   // remember, reverse logic
   if(!digitalRead(ZOOM_DOWN)){
@@ -301,9 +289,6 @@ void monitorLeftStick(){
 void monitorRightStick(){
   // Pan and tilt
 
-  //  byte prevTilt = tiltState;
-  //  byte prevPan = panState;
-
   // remember, reverse logic
   if(!digitalRead(TILT_DOWN)){
     tiltState = 1;
@@ -338,38 +323,33 @@ void monitorRightStick(){
 }
 
 void initializeCamera(){
-  writeBytes(hostControl_bytes);
+  // needs at least 300ms in between messages during init...
+  Serial.write(hostControl_bytes,7);
   delay(500);
-  writeBytes(cascadeOff0_bytes);
+  Serial.write(cascadeOff0_bytes,7);
   delay(500);
-  writeBytes(cascadeOff1_bytes);
+  Serial.write(cascadeOff1_bytes,7);
   delay(500);
-  writeBytes(autoExposure_bytes);
+  Serial.write(autoExposure_bytes,7);
   delay(500);
-  writeBytes(whiteBalNormal_bytes);
+  Serial.write(whiteBalNormal_bytes,7);
   delay(500);
   if(DAILY_RESET){
-    writeBytes(pedestalInit1_bytes);
+    Serial.write(pedestalInit1_bytes,7);
   } 
   else {
-    writeBytes(pedestalInit2_bytes);
+    Serial.write(pedestalInit2_bytes,7);
   }
 }
-void writeBytes(byte * msg){
-  Serial.write(msg,messageLength);
-}
+
 void waitForSerial(){
   while (Serial.available() > 0) {
     // read the incoming byte:
-    incomingByte = Serial.read();
-
-    // say what you got:
-    //Serial.print("I received: ");
-    //Serial.println(incomingByte, DEC);
+    byte incomingByte = Serial.read();
     // do nothing...
-
   } 
 }
+
 
 
 
