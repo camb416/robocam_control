@@ -66,13 +66,13 @@ void setup()
 
 
   for (int i=0;i<serialPorts.length;i++) {
-    print(serialPorts[i]);
+    //print(serialPorts[i]);
     if (serialPorts[i].equals(portName)) {
-      println("*"); 
+     // println("*"); 
       portNumber = i;
     } 
     else { 
-      println();
+     // println();
     }
   }
   
@@ -91,6 +91,8 @@ void setup()
 
   myPort = new Serial(this, portName, 9600);
   isReady = true;
+
+
 
   sendCommand(buildSerialString(hostControl_str));
   sendCommand(buildSerialString(initialize_str));
@@ -124,7 +126,10 @@ void draw() {
 }
 
 void stop() {
+  /* this is not calling :/ */
+  println("exiting application, stopping the serial port.");
   myPort.stop();
+  exit();
 }
 
 
@@ -192,6 +197,9 @@ void keyPressed() {
     } 
     else if (key == 's' || key == 'S') {
       sendCommand(buildSerialString(zoomOut));
+    } else {
+     // any other key
+    stop(); 
     }
     // do nothing
   }
