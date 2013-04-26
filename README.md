@@ -11,6 +11,19 @@ This program features
 - A DAILY_RESET flag that can be modified if the cameras should be resetting their position on power up.
 - A DEBUG_MODE flag that allows for easier human-readable messages to accompany the byte arrays.
 
+##PINOUTS
+
+- TILT_DOWN   D4
+- TILT_UP 		D5
+- PAN_RIGHT 	D6
+- PAN_LEFT 		D7
+- ZOOM_DOWN 	D8 
+- ZOOM_UP 		D9
+- FOCUS_RIGHT	D10
+- FOCUS_LEFT	D11
+
+- LED				D13
+
 # Processing
 
 Use the arrow keys to Pan and Tilt the camera. Use WASD to Zoom and Focus.
