@@ -15,7 +15,15 @@
 
 #define NUM_INPUTS 8
 
+
+// if something goes wrong, set this to true and plug the arduino into a serial monitor
+// just dont forget that you need to take the RS232 shield off. Then remember to set this
+// to false in production
 #define DEBUG_MODE false
+
+// if you set this to true, the pedestal will revert to the center
+// when the power is cycled on the Robocam Control hardware.
+#define DAILY_RESET false
 
 int inputPins [] = {
   TILT_DOWN, TILT_UP, PAN_RIGHT, PAN_LEFT, ZOOM_DOWN, ZOOM_UP, FOCUS_LEFT, FOCUS_RIGHT};
@@ -38,8 +46,11 @@ byte autoExposure_bytes [] = {
 // white balance normal
 byte whiteBalNormal_bytes [] = {
   0xFF , 0x30 , 0x30 , 0x00 , 0xA7 , 0x30 , 0xEF};
-// pedestal init 2 (return to original position
-byte pedestalInit_bytes [] = {
+// pedestal init 1 (center camera)
+byte pedestalInit1_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x58 , 0x30 , 0xEF};
+// pedestal init 2 (return to original position)
+byte pedestalInit2_bytes [] = {
   0xFF , 0x30 , 0x31 , 0x00 , 0x58 , 0x31 , 0xEF};
 // pan left
 byte panLeft_bytes [] = {
@@ -50,7 +61,30 @@ byte panRight_bytes [] = {
 // pan/tilt stop
 byte panTiltStop_bytes [] = {
   0xFF , 0x30 , 0x31 , 0x00 , 0x60 , 0x30, 0x30 , 0xEF};
-
+// tilt up
+byte tiltUp_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x53 , 0x33 , 0xEF};
+// tilt down
+byte tiltDown_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x53 , 0x34 , 0xEF};
+// zoom in
+byte zoomTele_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA2 , 0x32 , 0xEF};
+// zoom out
+byte zoomWide_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA2 , 0x31 , 0xEF};
+// zoom stop
+byte zoomStop_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA2 , 0x30 , 0xEF};
+// focus near
+byte focusNear_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA1 , 0x32 , 0xEF};
+// focus far
+byte focusFar_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA1 , 0x33 , 0xEF};
+// focus stop
+byte focusStop_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0xA1 , 0x31 , 0xEF};
 
 // with these, 0 means nothing, 1 means left or down, 2 means right or up
 byte focusState = 0;
@@ -151,6 +185,17 @@ void doZoom(byte dir){
 
   //TO DO: IMPLEMENT
   printStatus("zoom",dir, false);
+    switch(zoomState){
+  case 0:
+    Serial.write(zoomStop_bytes,sizeof(zoomStop_bytes));
+    break;
+  case 1:
+    Serial.write(zoomWide_bytes,sizeof(zoomWide_bytes));
+    break;
+  case 2:
+    Serial.write(zoomTele_bytes,sizeof(zoomTele_bytes));
+    break;
+  }
 }
 void doFocus(byte dir){
   // dir indicates direction
@@ -159,6 +204,18 @@ void doFocus(byte dir){
   // 2:right
   //TO DO: IMPLEMENT
   printStatus("focus",dir,true);
+  switch(focusState){
+  case 0:
+    Serial.write(focusStop_bytes,sizeof(focusStop_bytes));
+    break;
+  case 1:
+    Serial.write(focusNear_bytes,sizeof(focusNear_bytes));
+    break;
+  case 2:
+    Serial.write(focusFar_bytes,sizeof(focusFar_bytes));
+    break;
+  }
+
 }
 void doPan(byte dir){
   // dir indicates direction
@@ -170,7 +227,7 @@ void doPan(byte dir){
 
   switch(panState){
   case 0:
-    Serial.write(panTiltStop_bytes,sizeof(panStop_bytes));
+    Serial.write(panTiltStop_bytes,sizeof(panTiltStop_bytes));
     break;
   case 1:
     Serial.write(panLeft_bytes,sizeof(panLeft_bytes));
@@ -188,6 +245,17 @@ void doTilt(byte dir){
   // 2: up
   //TO DO: IMPLEMENT
   printStatus("tilt",dir,false);
+  switch(tiltState){
+  case 0:
+    Serial.write(panTiltStop_bytes,sizeof(panTiltStop_bytes));
+    break;
+  case 1:
+    Serial.write(tiltDown_bytes,sizeof(tiltDown_bytes));
+    break;
+  case 2:
+    Serial.write(tiltUp_bytes,sizeof(tiltUp_bytes));
+    break;
+  }
 }
 
 void monitorLeftStick(){
@@ -280,8 +348,12 @@ void initializeCamera(){
   delay(500);
   writeBytes(whiteBalNormal_bytes);
   delay(500);
-  writeBytes(pedestalInit_bytes);
-
+  if(DAILY_RESET){
+    writeBytes(pedestalInit1_bytes);
+  } 
+  else {
+    writeBytes(pedestalInit2_bytes);
+  }
 }
 void writeBytes(byte * msg){
   Serial.write(msg,messageLength);
@@ -298,6 +370,8 @@ void waitForSerial(){
 
   } 
 }
+
+
 
 
 
