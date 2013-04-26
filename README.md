@@ -24,6 +24,7 @@ Looking through the VC-C4 Programmer's Manual is a good start. I'm maintaining a
 
 ## Arduino
 - RS232 Shield from cutedigi.com http://www.cutedigi.com/arduino-shields/rs232-shield-for-arduino.html
+- *important!* Null Modem connection to the camera connector cable (this is done in the photo with one NULL MODEM beige Radio Shack part and one DB9 gender changer)
 - Screw Shield http://wingshieldindustries.com/products/screwshield/ (optional)
 
 ## Processing
