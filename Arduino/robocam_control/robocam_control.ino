@@ -1,8 +1,8 @@
 /*
 // ROBOCAM CONTROL
-// Authored by Cameron Browning at the American Museum of Natural History
-// 04-26-2013
-*/
+ // Authored by Cameron Browning at the American Museum of Natural History
+ // 04-26-2013
+ */
 
 
 // define input pins
@@ -17,7 +17,7 @@
 
 #define NUM_INPUTS 8
 
-// led pin
+// led pin 
 #define LED 13
 
 
@@ -132,11 +132,12 @@ void loop() {
   monitorLeftStick();
   monitorRightStick();
 
-   // light up the LED if anythings on. 
+  // light up the LED if anythings on. 
   if(isAnyStickInUse()){
     digitalWrite(LED,HIGH);
-  } else {
-     digitalWrite(LED,LOW);
+  } 
+  else {
+    digitalWrite(LED,LOW);
   }
   delay(10);        // delay in between reads for stability
 
@@ -349,6 +350,7 @@ void waitForSerial(){
     // do nothing...
   } 
 }
+
 
 
 
