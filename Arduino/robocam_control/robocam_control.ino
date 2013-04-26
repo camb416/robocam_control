@@ -5,10 +5,10 @@
 #define PAN_RIGHT 6
 #define PAN_LEFT 7
 
-#define ZOOM_DOWN 8
-#define ZOOM_UP 10
+#define ZOOM_DOWN 8 
+#define ZOOM_UP 9
 
-#define FOCUS_RIGHT 12
+#define FOCUS_RIGHT 10
 #define FOCUS_LEFT 11
 
 #define LED 13
@@ -58,7 +58,24 @@ void loop() {
 
   monitorLeftStick();
   monitorRightStick();
+
+  if(isAnyStickInUse()){
+    // TO DO: light up the led 
+  }
   delay(10);        // delay in between reads for stability
+
+  // TO DO: turn off the led
+
+}
+
+boolean isAnyStickInUse(){
+  int stateTotals = focusState+zoomState+panState+tiltState;
+  if(stateTotals>0){
+    return true;
+  }  
+  else {
+    return false; 
+  }
 }
 
 
@@ -190,6 +207,7 @@ void monitorRightStick(){
 
 
 }
+
 
 
 
