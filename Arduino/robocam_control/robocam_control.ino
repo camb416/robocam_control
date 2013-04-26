@@ -15,9 +15,41 @@
 
 #define NUM_INPUTS 8
 
+#define DEBUG_MODE false
+
 int inputPins [] = {
   TILT_DOWN, TILT_UP, PAN_RIGHT, PAN_LEFT, ZOOM_DOWN, ZOOM_UP, FOCUS_LEFT, FOCUS_RIGHT};
 
+int messageLength;
+
+// CAMERA MESSAGES
+
+// set host control
+byte hostControl_bytes [] = {
+  0xFF,0x30,0x30,0x00,0x90,0x30,0xEF};
+// cascade off (no multicam control)
+byte cascadeOff0_bytes [] = {
+  0xFF, 0x30 , 0x30 , 0x00 , 0x8F , 0x30 , 0xEF};
+byte cascadeOff1_bytes [] = {
+  0xFF, 0x30 , 0x30 , 0x00 , 0x8F , 0x31 , 0xEF};
+// Auto exposure
+byte autoExposure_bytes [] = {
+  0xFF , 0x30 , 0x30 , 0x00 , 0xA5 , 0x32 , 0xEF};
+// white balance normal
+byte whiteBalNormal_bytes [] = {
+  0xFF , 0x30 , 0x30 , 0x00 , 0xA7 , 0x30 , 0xEF};
+// pedestal init 2 (return to original position
+byte pedestalInit_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x58 , 0x31 , 0xEF};
+// pan left
+byte panLeft_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x53 , 0x32 , 0xEF};
+// pan right
+byte panRight_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x53 , 0x31 , 0xEF};
+// pan/tilt stop
+byte panTiltStop_bytes [] = {
+  0xFF , 0x30 , 0x31 , 0x00 , 0x60 , 0x30, 0x30 , 0xEF};
 
 
 // with these, 0 means nothing, 1 means left or down, 2 means right or up
@@ -31,23 +63,39 @@ byte prevZoom = 0;
 byte prevPan = 0;
 byte prevTilt = 0;
 
-// digital pin 2 has a pushbutton attached to it. Give it a name:
-int pushButton = 8;
+
+byte incomingByte;
+
 
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+
+  messageLength = sizeof(hostControl_bytes);
 
   for(int i=0;i< NUM_INPUTS; i++){
     pinMode(inputPins[i],INPUT_PULLUP);
   }
+  pinMode(LED,OUTPUT);
+  digitalWrite(LED,HIGH);
+
+  Serial.begin(9600);
+
+
+  waitForSerial();
+
+
+
+
+  initializeCamera();
+  digitalWrite(LED,LOW);
   // make the pushbutton's pin an input:
   //pinMode(pushButton, INPUT_PULLUP);
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
+  // waitForSerial();
   // read the input pin:
   //int buttonState = digitalRead(pushButton);
   // print out the state of the button:
@@ -92,7 +140,7 @@ void printStatus(String action, byte dir, boolean xaxis){
     twoMsg = " up";
   }
   dir == 0 ? msg += " stop" : dir == 1 ? msg += oneMsg : msg += twoMsg;
-  Serial.println(msg);  
+  if(DEBUG_MODE) Serial.println(msg);  
 }
 
 void doZoom(byte dir){
@@ -119,6 +167,19 @@ void doPan(byte dir){
   // 2:right
   //TO DO: IMPLEMENT
   printStatus("pan",dir,true);
+
+  switch(panState){
+  case 0:
+    Serial.write(panTiltStop_bytes,sizeof(panStop_bytes));
+    break;
+  case 1:
+    Serial.write(panLeft_bytes,sizeof(panLeft_bytes));
+    break;
+  case 2:
+    Serial.write(panRight_bytes,sizeof(panRight_bytes));
+    break;
+  }
+
 }
 void doTilt(byte dir){
   // dir indicates direction
@@ -207,6 +268,38 @@ void monitorRightStick(){
 
 
 }
+
+void initializeCamera(){
+  writeBytes(hostControl_bytes);
+  delay(500);
+  writeBytes(cascadeOff0_bytes);
+  delay(500);
+  writeBytes(cascadeOff1_bytes);
+  delay(500);
+  writeBytes(autoExposure_bytes);
+  delay(500);
+  writeBytes(whiteBalNormal_bytes);
+  delay(500);
+  writeBytes(pedestalInit_bytes);
+
+}
+void writeBytes(byte * msg){
+  Serial.write(msg,messageLength);
+}
+void waitForSerial(){
+  while (Serial.available() > 0) {
+    // read the incoming byte:
+    incomingByte = Serial.read();
+
+    // say what you got:
+    //Serial.print("I received: ");
+    //Serial.println(incomingByte, DEC);
+    // do nothing...
+
+  } 
+}
+
+
 
 
 
